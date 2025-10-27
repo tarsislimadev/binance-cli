@@ -25,6 +25,10 @@ class database {
 
     return new database_object(this.dir, id.toString())
   }
+
+  listJSON() {
+    return fs.readdirSync(this.dir).map((id) => (new database_object(this.dir, id)).toJSON()).sort((a, b) => a._id - b._id)
+  }
 }
 
 class database_object {
@@ -61,6 +65,24 @@ class database_object {
     Object.keys(many).map((key) => {
       this.write(key, many[key])
     })
+  }
+
+  read(key) {
+    return fs.readFileSync(this.getParamName(key)).toString()
+  }
+
+  listParams() {
+    return fs.readdirSync(this.getFullDir())
+  }
+
+  toJSON() {
+    return {
+      _id: this.id,
+      ...this.listParams().reduce((json, param) => ({
+        ...json,
+        [param]: this.read(param)
+      }), {})
+    }
   }
 }
 
