@@ -1,29 +1,17 @@
-const API_URL = 'https://api2.binance.com/api/v3'
+const { binance } = require('./binance.js')
+const { database } = require('./database.js')
 
-const request = async (method, path, body = null) => {
-  return await fetch(`${API_URL}${path}`, { method, body: method == 'GET' ? null : body }).then(r => r.json())
+const db = new database('./data')
+
+const ee = new EventTarget()
+
+const SYMBOL = 'BTCBRL'
+
+const saveKlines = async () => {
+  const klines = await binance.api.v3.ticker.klines(SYMBOL)
+  klines.map(([open_time, open_price, high_price, low_price, close_price, volume, close_time]) => {
+    db.in(SYMBOL).newObject(open_time).writeMany({ open_price, high_price, low_price, close_price, volume })
+  })
 }
 
-const path4params = (path, params = {}) => {
-  return `${path}?${Object.keys(params).map((key) => `${key}=${params[key]}`).join('&')}`
-}
-
-const binance = {
-  api: {
-    v3: {
-      ticker: {
-        price: async (symbol) => await request('GET', path4params('/ticker/price', { symbol })),
-        historicalTrades: async (symbol) => await request('GET', path4params('/historicalTrades', { symbol })),
-        klines: async (symbol, interval = '1m') => await request('GET', path4params('/klines', { symbol, interval })),
-      }
-    }
-  }
-}
-
-const run = async () => {
-  const symbol = 'LTCBTC'
-  const klines = await binance.api.v3.ticker.klines(symbol)
-  console.log({ symbol, klines })
-}
-
-run().finally(() => process.exit(0))
+saveKlines().finally(() => process.exit(0))
