@@ -1,5 +1,5 @@
 const logger = {
-  log: (...args) => console.log(...args),
+  log: (...args) => { if (process.env.DEBUG) console.log(...args) },
 }
 
 module.exports = { logger }
